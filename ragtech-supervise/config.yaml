@@ -1,0 +1,45 @@
+name: "Ragtech Supervise"
+description: "Ragtech UPS monitoring software (Supervise) packaged as a Home Assistant add-on."
+# Pull the prebuilt upstream image directly (no local build). The Supervisor
+# pulls "{image}:{version}", so version must match a published tag. The only
+# published tags are "v"-prefixed (e.g. v0.0.6).
+image: "ghcr.io/kriansa/ragtech-supervise"
+version: "v0.0.6"
+slug: "ragtech_supervise"
+url: "https://github.com/carnei-ro/ragtech-supervise-ha-app"
+# The upstream image ships its own init system, so let Supervisor skip its own.
+init: false
+# The upstream Ragtech Supervise image is only published for amd64.
+arch:
+  - amd64
+startup: application
+# Map the web interface: container 4470 -> host 4470.
+ports:
+  4470/tcp: 4470
+ports_description:
+  4470/tcp: "Ragtech Supervise web interface"
+# Map the UPS serial device. The Supervisor maps listed devices with
+# read + write (+ mknod) cgroup permissions, i.e. read-write mode.
+devices:
+  - /dev/ttyACM0
+panel_icon: "mdi:power-plug-battery"
+panel_title: "Ragtech Supervise"
+boot: auto
+webui: "http://[HOST]:[PORT:4470]/"
+watchdog: "http://[HOST]:[PORT:4470]/"
+ingress: true
+ingress_port: 4470
+ingress_entry: "/"
+panel_admin: false
+homeassistant_api: true
+hassio_api: true
+host_network: false
+usb: true
+# Mount Home Assistant's /share into the container (read-write) so the SQLite
+# DB at /data/monit.db can be copied out / backed up. NOTE: /data itself is
+# already a persistent volume; this mapping is only for external access.
+map:
+  - type: share
+    read_only: false
+services:
+  - "mqtt:want"
